@@ -1,8 +1,12 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "megamobilier-test",
+  "account_id": "48f505082d6f5aaf4510b5b995a42b14",
   "main": "src/index.ts",
-  "compatibility_date": "2026-01-21"
+  "compatibility_date": "2026-01-21",
+  "ai": {
+    "binding": "AI"
+  }
   // "compatibility_flags": [
   //   "nodejs_compat"
   // ],

@@ -3,6 +3,7 @@ dist/
 
 # dev
 .yarn/
+.claude
 !.yarn/releases
 .vscode/*
 !.vscode/launch.json
