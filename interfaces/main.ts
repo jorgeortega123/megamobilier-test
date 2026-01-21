@@ -12,7 +12,7 @@ export interface RequestData {
     email: string;
     ciudad: string;
     requerimiento: string;
-    formato: "text" | "audio" | "image";
+    formato: "text" | "audio" | "image" | any;
     estado: string;
   };
 }
@@ -42,7 +42,6 @@ export interface ErrorResponse {
   mensaje: string;
   detalles?: string;
 }
-
 
 export interface AIQuoteResponse {
   items: Array<{
