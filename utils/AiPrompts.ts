@@ -28,16 +28,18 @@ FORMATO DE RESPUESTA (JSON estricto, sin backticks ni markdown):
 }
 
 export function buildVisionPrompt(catalogoPrompt: string): string {
-  return `Analiza esta imagen y describe detalladamente los productos o necesidades que ves.
-Enfocate en:
-- Tipo de producto (mobiliario hospitalario, oficina, paneles solares, uniformes, etc.)
-- Cantidad de items visibles
-- Caracteristicas (tamano, color, tipo)
-- Contexto del espacio o uso
+  return `Eres un asistente de ventas. Analiza esta imagen y extrae UNICAMENTE el pedido del cliente.
 
-CATALOGO DE REFERENCIA para identificar productos similares:
+INSTRUCCIONES:
+1. Identifica que productos quiere comprar el cliente basado en la imagen
+2. Determina las cantidades si son visibles
+3. Responde de forma MUY BREVE y CONCISA
+
+CATALOGO DISPONIBLE:
 ${catalogoPrompt}
 
-Proporciona una descripcion clara que pueda usarse para generar una cotizacion.
-Menciona especificamente que productos del catalogo son similares a lo que ves.`;
+RESPONDE SOLO con el pedido en formato simple, ejemplo:
+"Necesito 8 sillas de oficina y 1 mesa de reuniones para 8 personas"
+
+NO describas la imagen. NO des explicaciones. SOLO indica que productos y cantidades necesita el cliente.`;
 }
