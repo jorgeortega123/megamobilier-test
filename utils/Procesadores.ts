@@ -1,5 +1,6 @@
 import { buildSystemPrompt, buildVisionPrompt } from "./AiPrompts";
 
+
 export async function processText(
   ai: Ai,
   requerimiento: string,
@@ -88,32 +89,28 @@ export async function processImage(
   imageData: string,
   catalogoPrompt: string,
 ): Promise<{ response: string; textoInterpretado: string }> {
-  // Asegurar formato data URI
-  let imageUrl = imageData;
-  if (!imageData.startsWith("data:")) {
-    imageUrl = `data:image/jpeg;base64,${imageData}`;
+  // Convertir base64 a array de bytes para LLaVA
+  let base64Data = imageData;
+  if (imageData.startsWith("data:")) {
+    base64Data = imageData.split(",")[1];
+  }
+
+  const binaryString = atob(base64Data);
+  const imageBuffer = new Uint8Array(binaryString.length);
+  for (let i = 0; i < binaryString.length; i++) {
+    imageBuffer[i] = binaryString.charCodeAt(i);
   }
 
   const visionPrompt = buildVisionPrompt(catalogoPrompt);
 
-  // Paso 1: Analizar imagen con modelo de vision
-  const visionResponse = (await ai.run(
-    "@cf/meta/llama-3.2-11b-vision-instruct",
-    {
-      messages: [
-        {
-          role: "user",
-          content: [
-            { type: "text", text: visionPrompt },
-            { type: "image_url", image_url: { url: imageUrl } },
-          ],
-        },
-      ],
-      max_tokens: 512,
-    },
-  )) as { response?: string };
+  // Paso 1: Analizar imagen con modelo de vision (formato LLaVA)
+  const visionResponse = (await ai.run("@cf/llava-hf/llava-1.5-7b-hf", {
+    image: [...imageBuffer],
+    prompt: visionPrompt,
+    max_tokens: 512,
+  })) as { description?: string; response?: string };
 
-  const descripcionImagen = visionResponse.response ?? "";
+  const descripcionImagen = visionResponse.description ?? visionResponse.response ?? "";
 
   // Paso 2: Procesar descripcion con modelo de texto para cotizacion
   const result = await processText(ai, descripcionImagen, catalogoPrompt);
