@@ -1,9 +1,7 @@
 import { Hono } from "hono";
+import { cors } from "hono/cors";
 import CATALOGO from "../examples/dataCatalog";
-import {
-  ErrorResponse,
-  RequestData,
-} from "../interfaces/main";
+import { ErrorResponse, RequestData } from "../interfaces/main";
 import { processText, processImage, processAudio } from "../utils/Procesadores";
 import { getCatalogoParaPrompt } from "../utils/Auxiliares";
 import { parseAIResponse } from "../utils/AiResponse";
@@ -13,6 +11,16 @@ type Bindings = {
 };
 
 const app = new Hono<{ Bindings: Bindings }>();
+
+// Configurar CORS para el frontend
+app.use(
+  "*",
+  cors({
+    origin: ["https://megamobilier-test-frontend.pages.dev", "http://localhost:3000"],
+    allowMethods: ["GET", "POST", "OPTIONS"],
+    allowHeaders: ["Content-Type"],
+  }),
+);
 
 app.get("/", (c) => {
   return c.json({
@@ -50,7 +58,8 @@ app.post("/cotizar", async (c) => {
       );
     }
 
-    const { nombre, requerimiento, formato, ingresoFecha } = body.data;
+    const { nombre, requerimiento, formato, ingresoFecha, ciudad, email } =
+      body.data;
 
     if (!nombre) {
       return c.json<ErrorResponse>(
@@ -122,7 +131,37 @@ app.post("/cotizar", async (c) => {
       aiResult.textoInterpretado,
     );
 
-    // 5. Retornar respuesta
+    const isProduction = !c.req.url.includes("localhost");
+
+    if (isProduction) {
+      const n8nPayload = {
+        data: {
+          nombre: cotizacion.cliente || "No indicado",
+          ingresoFecha: cotizacion.fecha,
+          requerimiento: cotizacion.debug.textoInterpretado,
+          formato: cotizacion.debug.formatoProcesado,
+          estado: "procesado",
+          ciudad: ciudad || "No indicado",
+          email: email || "No indicado",
+        },
+      };
+
+      c.executionCtx.waitUntil(
+        fetch(
+          "http://automation-n8nwithpostgres-491e65-86-48-21-187.traefik.me/webhook/megamobilier",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(n8nPayload),
+          },
+        )
+          .then((res) => console.log("n8n status:", res.status))
+          .catch((err) => console.log("n8n error:", err)),
+      );
+    } else {
+      console.log("n8n webhook omitido en desarrollo local");
+    }
+
     return c.json(cotizacion);
   } catch (error) {
     console.error("Error procesando cotizacion:", error);
